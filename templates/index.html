@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Plan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #tasks {
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .task {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+        }
+
+        .task.completed {
+            background-color: #e6ffe6;
+            border-left: 5px solid #4CAF50;
+        }
+
+        .task h3 {
+            margin: 0 0 5px;
+            color: #333;
+        }
+
+        .task p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .task input[type="checkbox"] {
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Daily Plan</h1>
+    <span id="remaining_tasks"></span>
+    <div id="tasks">
+        <!-- Tasks will be dynamically inserted here -->
+    </div>
+
+    <script>
+        async function fetchDailyTasks() {
+            try {
+                const response = await fetch('/per_day_plan');
+                if (!response.ok) throw new Error('Failed to fetch tasks');
+                const tasks = await response.json();
+                renderTasks(reamaining_activies = tasks['remaining_activites'], tasks['data']);
+            } catch (error) {
+                console.error(error);
+                alert('Error loading tasks');
+            }
+        }
+
+        function renderTasks(reamaining_activies, tasks) {
+
+            const remaining_tasks = document.getElementById('remaining_tasks')
+            remaining_tasks.innerText = `${reamaining_activies} activities remaining today`
+            const tasksContainer = document.getElementById('tasks');
+            tasksContainer.innerHTML = '';
+
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task ${task.is_completed ? 'completed' : ''}`;
+                taskElement.innerHTML = `
+                    <div>
+                        <h3>${task.title}</h3>
+                        <p>${task.tag}</p>
+                    </div>
+                    <input type="checkbox" ${task.is_completed ? 'checked' : ''} onclick="toggleTaskCompletion(${task.id}, this)">
+                `;
+                tasksContainer.appendChild(taskElement);
+            });
+        }
+
+        async function toggleTaskCompletion(taskId, checkbox) {
+            try {
+                const response = await fetch(`/per_day_plan/${taskId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: 1,
+                        request_date: new Date().toISOString().split('T')[0]
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to update task');
+                const updatedTasks = await response.json();
+                renderTasks(updatedTasks['remaining_activites'], updatedTasks['data']);
+            } catch (error) {
+                console.error(error);
+                alert('Error updating task status');
+                checkbox.checked = !checkbox.checked; // Revert checkbox state on failure
+            }
+        }
+
+        fetchDailyTasks();
+    </script>
+</body>
+
+</html>
